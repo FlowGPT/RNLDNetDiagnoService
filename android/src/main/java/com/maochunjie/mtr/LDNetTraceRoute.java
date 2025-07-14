@@ -234,6 +234,7 @@ public class LDNetTraceRoute {
                             log.append("unknown host or network error\t");
                             finish = true;
                         } else {
+                            log.append(str);
                             log.append(trace.getHop());
                             log.append("\t\t timeout \t"); //********
                             trace.setHop(trace.getHop() + 1);

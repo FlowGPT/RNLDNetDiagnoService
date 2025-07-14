@@ -27,5 +27,8 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
+  },
+  "dependencies": {
+    "@react-native-community/netinfo": "^11.4.1"
   }
 }

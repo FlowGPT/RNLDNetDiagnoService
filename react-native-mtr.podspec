@@ -18,6 +18,6 @@ Pod::Spec.new do |s|
   s.frameworks = 'CoreTelephony'
   s.libraries = 'resolv'
   
-
+  s.dependency "react-native-netinfo"
   s.dependency "React-Core"
 end

@@ -170,8 +170,18 @@ public class LDNetDiagnoService extends
             if (_alwaysPing || !(_isNetConnected && _isDomainParseOk && _isSocketConnected)) {// 联网&&DNS解析成功&&connect测试成功
                 recordStepInfo("\n开始ping...");
                 _netPinger = new LDNetPing(this, 4);
-                recordStepInfo("ping...127.0.0.1");
-                _netPinger.exec("127.0.0.1", false);
+              recordStepInfo("ping...google.com");
+              _netPinger.exec("google.com", false);
+              recordStepInfo("ping...cloudflare.com");
+              _netPinger.exec("cloudflare.com", false);
+              recordStepInfo("ping...flowgpt.com");
+              _netPinger.exec("flowgpt.com", false);
+              recordStepInfo("ping...flowgpt.app");
+              _netPinger.exec("flowgpt.app", false);
+              recordStepInfo("ping...emochi.com");
+              _netPinger.exec("emochi.com", false);
+              recordStepInfo("ping...mobile-backend.flowgpt.com");
+              _netPinger.exec("mobile-backend.flowgpt.com", false);
                 recordStepInfo("ping本机IP..." + _localIp);
                 _netPinger.exec(_localIp, false);
                 if (LDNetUtil.NETWORKTYPE_WIFI.equals(_netType)) {// 在wifi下ping网关

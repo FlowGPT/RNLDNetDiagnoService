@@ -14,13 +14,14 @@
 #import "LDNetGetAddress.h"
 #import "LDNetTimer.h"
 #import "LDNetConnect.h"
-#import <react-native-netinfo/RNCConnectionStateWatcher.h>
+#import "PhoneTraceRoute.h"
+@import react_native_netinfo.RNCConnectionStateWatcher;
 #import <libkern/OSAtomic.h>
 static NSString *const kPingOpenServerIP = @"";
 static NSString *const kCheckOutIPURL = @"";
 
 @interface LDNetDiagnoService () <LDNetPingDelegate, LDNetTraceRouteDelegate,
-                                  LDNetConnectDelegate, RNCConnectionStateWatcherDelegate> {
+                                  LDNetConnectDelegate, RNCConnectionStateWatcherDelegate,PhoneTraceRouteDelegate> {
     NSString *_appCode;  //客户端标记
     NSString *_appName;
     NSString *_appVersion;
@@ -43,7 +44,8 @@ static NSString *const kCheckOutIPURL = @"";
     LDNetPing *_netPinger;
     LDNetTraceRoute *_traceRouter;
     LDNetConnect *_netConnect;
-    
+    PhoneTraceRoute *_ucTraceroute;
+
     volatile uint32_t _IsRunning;
 }
 
@@ -79,12 +81,14 @@ static NSString *const kCheckOutIPURL = @"";
         _connectionStateWatcher = [[RNCConnectionStateWatcher alloc] initWithDelegate:self];
         
         // 在初始化方法中加入 _traceRouter 的初始化以实现一个 _traceRouter 对应多个 domain 的场景
-        _traceRouter = [[LDNetTraceRoute alloc] initWithMaxTTL:TRACEROUTE_MAX_TTL
-                                                       timeout:TRACEROUTE_TIMEOUT
-                                                   maxAttempts:TRACEROUTE_ATTEMPTS
-                                                          port:TRACEROUTE_PORT];
-        _traceRouter.delegate = self;
-        
+//         _traceRouter = [[LDNetTraceRoute alloc] initWithMaxTTL:TRACEROUTE_MAX_TTL
+//                                                        timeout:TRACEROUTE_TIMEOUT
+//                                                    maxAttempts:TRACEROUTE_ATTEMPTS
+//                                                           port:TRACEROUTE_PORT];
+//         _traceRouter.delegate = self;
+      _ucTraceroute = [[PhoneTraceRoute alloc] init];
+      _ucTraceroute.delegate = self;
+
         // 在初始化方法中加入 _netPinger 的初始化以实现一个 _traceRouter 对应多个 domain 的场景
         _netPinger = [[LDNetPing alloc] init];
         _netPinger.delegate = self;
@@ -151,15 +155,18 @@ static NSString *const kCheckOutIPURL = @"";
     
     // traceroute
     [self recordStepInfo:@"\nStart Traceroute..."];
-    if (_traceRouter) {
-//        [NSThread detachNewThreadSelector:@selector(doTraceRoute:)
-//                                         toTarget:_traceRouter
-//                                       withObject:domain];
-        
-        // 已经是子线程，没必要再创建子线程
-        // 而且会导致 self.hostAddress 在不同的线程设置为nil，导致LDSimplePing.sendPingWithData中assert self.hostAddress报错
-        [_traceRouter doTraceRoute:domain];
-    }
+//    if (_traceRouter) {
+////        [NSThread detachNewThreadSelector:@selector(doTraceRoute:)
+////                                         toTarget:_traceRouter
+////                                       withObject:domain];
+//
+//        // 已经是子线程，没必要再创建子线程
+//        // 而且会导致 self.hostAddress 在不同的线程设置为nil，导致LDSimplePing.sendPingWithData中assert self.hostAddress报错
+//        [_traceRouter doTraceRoute:domain];
+//    }
+  if(_ucTraceroute){
+    [_ucTraceroute startTracerouteHost:domain];
+  }
 }
 
 
@@ -179,12 +186,17 @@ static NSString *const kCheckOutIPURL = @"";
             _netPinger = nil;
         }
 
-        if (_traceRouter != nil) {
-            [_traceRouter setIsRunning:NO];
-            // 下面这行代码会导致正在执行中的 traceRouter 对象被释放掉，进而在内部的 while 循环中访问 self.delegate 时，由于 self 已经是野指针了，所以会直接 crash 掉
-            // 在业务方调用 stopNetDialogsis 后会将当前对象置为 nil
-//            _traceRouter = nil;
-        }
+//         if (_traceRouter != nil) {
+//             [_traceRouter setIsRunning:NO];
+//             // 下面这行代码会导致正在执行中的 traceRouter 对象被释放掉，进而在内部的 while 循环中访问 self.delegate 时，由于 self 已经是野指针了，所以会直接 crash 掉
+//             // 在业务方调用 stopNetDialogsis 后会将当前对象置为 nil
+// //            _traceRouter = nil;
+//         }
+
+      if (_ucTraceroute != nil) {
+        [_ucTraceroute stopTracert];
+        _ucTraceroute = nil;
+      }
 
         [self setIsRunning:NO];
         self.finishDomainCount = 0;
@@ -281,35 +293,28 @@ static NSString *const kCheckOutIPURL = @"";
     NSMutableArray *pingInfo = [[NSMutableArray alloc] init];
     
     [self recordStepInfo:@"\nStart ping..."];
-    [_netPinger runWithHostName:host normalPing:YES];
-    
-//    if (pingLocal) {
-//        [pingAdd addObject:@"127.0.0.1"];
-//        [pingInfo addObject:@"Local"];
-//        [pingAdd addObject:_localIp];
-//        [pingInfo addObject:@"Local IP"];
-//        if (_gatewayIp && ![_gatewayIp isEqualToString:@""]) {
-//            [pingAdd addObject:_gatewayIp];
-//            [pingInfo addObject:@"Local Gateway"];
-//        }
-//        if ([_dnsServers count] > 0) {
-//            [pingAdd addObject:[_dnsServers objectAtIndex:0]];
-//            [pingInfo addObject:@"DNS Server"];
-//        }
-//    }
 
-    
-
-//    for (int i = 0; i < [pingAdd count]; i++) {
-//        [self recordStepInfo:[NSString stringWithFormat:@"ping: %@ %@ ...",
-//                                                        [pingInfo objectAtIndex:i],
-//                                                        [pingAdd objectAtIndex:i]]];
-//        if ([[pingAdd objectAtIndex:i] isEqualToString:kPingOpenServerIP]) {
-//            [_netPinger runWithHostName:[pingAdd objectAtIndex:i] normalPing:YES];
-//        } else {
-//            [_netPinger runWithHostName:[pingAdd objectAtIndex:i] normalPing:YES];
-//        }
-//    }
+   [pingAdd addObject:@"google.com"];
+   [pingInfo addObject:@"google.com"];
+   [pingAdd addObject:@"cloudflare.com"];
+   [pingInfo addObject:@"cloudflare.com"];
+   [pingAdd addObject:@"flowgpt.com"];
+   [pingInfo addObject:@"flowgpt.com"];
+   [pingAdd addObject:@"flowgpt.app"];
+   [pingInfo addObject:@"flowgpt.app"];
+   [pingAdd addObject:@"emochi.com"];
+   [pingInfo addObject:@"emochi.com"];
+   [pingAdd addObject:@"mobile-backend.flowgpt.com"];
+   [pingInfo addObject:@"mobile-backend.flowgpt.com"];
+    for (int i = 0; i < [pingAdd count]; i++) {
+        [self recordStepInfo:[NSString stringWithFormat:@"ping: %@...",
+                                                        [pingAdd objectAtIndex:i]]];
+        if ([[pingAdd objectAtIndex:i] isEqualToString:kPingOpenServerIP]) {
+            [_netPinger runWithHostName:[pingAdd objectAtIndex:i] normalPing:YES];
+        } else {
+            [_netPinger runWithHostName:[pingAdd objectAtIndex:i] normalPing:YES];
+        }
+    }
 }
 
 
@@ -448,4 +453,32 @@ static NSString *const kCheckOutIPURL = @"";
     }
 }
 
+#pragma mark -PhoneTraceRouteDelegate
+- (void)tracerouteWithUCTraceRoute:(PhoneTraceRoute *)ucTraceRoute tracertResult:(PTracerRouteResModel *)tracertRes
+{
+    NSMutableString *tracertTimeoutRes = [NSMutableString string];
+    NSMutableString *mutableDurations = [NSMutableString string];
+    for (int i = 0; i < tracertRes.count; i++) {
+        if (tracertRes.durations[i] <= 0) {
+            [tracertTimeoutRes appendString:@" *"];
+        }else{
+            [mutableDurations appendString:[NSString stringWithFormat:@" %.3fms",tracertRes.durations[i] * 1000]];
+        }
+    }
+
+    if (tracertTimeoutRes.length > 0) {
+      [self appendRouteLog:[NSString stringWithFormat:@"%d %@",(int)tracertRes.hop,tracertTimeoutRes]];
+       // _tracertResultHandler(tracertDetail,tracertRes.dstIp);
+        return;
+    }
+
+    NSString *tracertNormalDetail = [NSString stringWithFormat:@"%d  %@(%@) %@",(int)tracertRes.hop,tracertRes.ip,tracertRes.ip,mutableDurations];
+    [self appendRouteLog:tracertNormalDetail];
+
+
+}
+
+- (void)tracerouteFinishedWithUCTraceRoute:(PhoneTraceRoute *)ucTraceRoute{
+  [self traceRouteDidEnd];
+}
 @end
