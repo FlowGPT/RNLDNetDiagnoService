@@ -420,16 +420,21 @@ static NSString *const kCheckOutIPURL = @"";
         resultType = NETWORK_TYPE_WIFI;
     }
     
-    if ([state.type isEqualToString:RNCCellularGeneration2g] ) {
+    if ([state.cellularGeneration isEqualToString:RNCCellularGeneration2g] ) {
         resultType = NETWORK_TYPE_2G;
     }
     
-    if ([state.type isEqualToString:RNCCellularGeneration3g] ) {
+    if ([state.cellularGeneration isEqualToString:RNCCellularGeneration3g] ) {
         resultType = NETWORK_TYPE_3G;
     }
     
-    if ([state.type isEqualToString:RNCCellularGeneration4g] ) {
+    if ([state.cellularGeneration isEqualToString:RNCCellularGeneration4g] ) {
         resultType = NETWORK_TYPE_4G;
+    }
+    
+    
+    if ([state.cellularGeneration isEqualToString:RNCCellularGeneration5g] ) {
+        resultType = NETWORK_TYPE_5G;
     }
     
     return resultType;

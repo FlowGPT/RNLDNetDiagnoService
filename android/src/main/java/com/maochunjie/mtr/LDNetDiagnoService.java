@@ -182,16 +182,6 @@ public class LDNetDiagnoService extends
               _netPinger.exec("emochi.com", false);
               recordStepInfo("ping...mobile-backend.flowgpt.com");
               _netPinger.exec("mobile-backend.flowgpt.com", false);
-                recordStepInfo("ping本机IP..." + _localIp);
-                _netPinger.exec(_localIp, false);
-                if (LDNetUtil.NETWORKTYPE_WIFI.equals(_netType)) {// 在wifi下ping网关
-                    recordStepInfo("ping本地网关..." + _gateWay);
-                    _netPinger.exec(_gateWay, false);
-                }
-                recordStepInfo("ping本地DNS1..." + _dns1);
-                _netPinger.exec(_dns1, false);
-                recordStepInfo("ping本地DNS2..." + _dns2);
-                _netPinger.exec(_dns2, false);
             } else {
                 recordStepInfo("\n联网&&DNS解析成功&&connect测试成功，无需ping");
             }
