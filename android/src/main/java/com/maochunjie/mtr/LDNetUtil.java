@@ -53,7 +53,16 @@ public class LDNetUtil {
             } else if (type.equalsIgnoreCase("MOBILE")) {
                 String proxyHost = android.net.Proxy.getDefaultHost();
                 if (TextUtils.isEmpty(proxyHost)) {
-                    mNetWorkType = mobileNetworkType(context);
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                        int perm = context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE);
+                        if (perm != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            mNetWorkType = NETWORKTYPE_INVALID;
+                        } else {
+                            mNetWorkType = mobileNetworkType(context);
+                        }
+                    } else {
+                        mNetWorkType = mobileNetworkType(context);
+                    }
                 } else {
                     mNetWorkType = NETWORKTYPE_WAP;
                 }
@@ -295,41 +304,45 @@ public class LDNetUtil {
         if (telephonyManager == null) {
             return "TM==null";
         }
-        switch (telephonyManager.getNetworkType()) {
-            case TelephonyManager.NETWORK_TYPE_1xRTT:// ~ 50-100 kbps
-                return "2G";
-            case TelephonyManager.NETWORK_TYPE_CDMA:// ~ 14-64 kbps
-                return "2G";
-            case TelephonyManager.NETWORK_TYPE_EDGE:// ~ 50-100 kbps
-                return "2G";
-            case TelephonyManager.NETWORK_TYPE_EVDO_0:// ~ 400-1000 kbps
-                return "3G";
-            case TelephonyManager.NETWORK_TYPE_EVDO_A:// ~ 600-1400 kbps
-                return "3G";
-            case TelephonyManager.NETWORK_TYPE_GPRS:// ~ 100 kbps
-                return "2G";
-            case TelephonyManager.NETWORK_TYPE_HSDPA:// ~ 2-14 Mbps
-                return "3G";
-            case TelephonyManager.NETWORK_TYPE_HSPA:// ~ 700-1700 kbps
-                return "3G";
-            case TelephonyManager.NETWORK_TYPE_HSUPA: // ~ 1-23 Mbps
-                return "3G";
-            case TelephonyManager.NETWORK_TYPE_UMTS:// ~ 400-7000 kbps
-                return "3G";
-            case TelephonyManager.NETWORK_TYPE_EHRPD:// ~ 1-2 Mbps
-                return "3G";
-            case TelephonyManager.NETWORK_TYPE_EVDO_B: // ~ 5 Mbps
-                return "3G";
-            case TelephonyManager.NETWORK_TYPE_HSPAP:// ~ 10-20 Mbps
-                return "3G";
-            case TelephonyManager.NETWORK_TYPE_IDEN:// ~25 kbps
-                return "2G";
-            case TelephonyManager.NETWORK_TYPE_LTE:// ~ 10+ Mbps
-                return "4G";
-            case TelephonyManager.NETWORK_TYPE_UNKNOWN:
-                return "UNKNOWN";
-            default:
-                return "UNKNOWN:" + telephonyManager.getNetworkType();
+        try {
+            switch (telephonyManager.getNetworkType()) {
+                case TelephonyManager.NETWORK_TYPE_1xRTT:// ~ 50-100 kbps
+                    return "2G";
+                case TelephonyManager.NETWORK_TYPE_CDMA:// ~ 14-64 kbps
+                    return "2G";
+                case TelephonyManager.NETWORK_TYPE_EDGE:// ~ 50-100 kbps
+                    return "2G";
+                case TelephonyManager.NETWORK_TYPE_EVDO_0:// ~ 400-1000 kbps
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_EVDO_A:// ~ 600-1400 kbps
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_GPRS:// ~ 100 kbps
+                    return "2G";
+                case TelephonyManager.NETWORK_TYPE_HSDPA:// ~ 2-14 Mbps
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_HSPA:// ~ 700-1700 kbps
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_HSUPA: // ~ 1-23 Mbps
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_UMTS:// ~ 400-7000 kbps
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_EHRPD:// ~ 1-2 Mbps
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_EVDO_B: // ~ 5 Mbps
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_HSPAP:// ~ 10-20 Mbps
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_IDEN:// ~25 kbps
+                    return "2G";
+                case TelephonyManager.NETWORK_TYPE_LTE:// ~ 10+ Mbps
+                    return "4G";
+                case TelephonyManager.NETWORK_TYPE_UNKNOWN:
+                    return "UNKNOWN";
+                default:
+                    return "UNKNOWN:" + telephonyManager.getNetworkType();
+            }
+        } catch (SecurityException se) {
+            return "UNKNOWN";
         }
     }
 
